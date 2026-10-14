@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark"><title>文脉 · PaperThread</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css"><link rel="stylesheet" href="style.css?v=7"><link rel="stylesheet" href="reading.css?v=3">
+  <script defer src="vendor/katex/katex.min.js"></script><script defer src="vendor/katex/contrib/auto-render.min.js"></script>
+  <script defer src="bundle.js"></script><script defer src="interactions.js?v=6"></script><script defer src="app.js?v=8"></script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<header class="topbar"><a class="brand" href="#/library" aria-label="文脉，回到论文库"><svg class="brand-symbol" viewBox="0 0 24 28" aria-hidden="true"><path d="M3 3h13v22H3zM8 7h13v18H8"/><path d="M11 12h6M11 16h6M11 20h4"/></svg><span>文脉</span></a><span class="brand-caption">个人阅读库</span>
+  <nav aria-label="主导航"><a href="#/library" id="nav-library">论文</a><a href="#/knowledge" id="nav-knowledge">知识</a><a href="#/notes" id="nav-notes">阅读笔记</a></nav>
+  <button class="search-launch" id="search-launch" aria-label="搜索论文与知识"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span>搜索</span><kbd>⌘ K</kbd></button>
+  <button class="icon-button" id="theme" aria-label="切换明暗主题" title="切换明暗主题"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></svg></button>
+</header>
+<main id="main" tabindex="-1"><div class="loading">正在打开书架…</div></main>
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-label="知识介绍" hidden><header class="drawer-top"><button id="drawer-back" class="text-button" hidden>← 上一知识</button><span>随文知识</span><button id="drawer-close" class="icon-button" aria-label="关闭知识侧栏">✕</button></header><div id="drawer-body"></div></aside>
+<dialog id="search-dialog"><form method="dialog" class="search-head"><label class="sr-only" for="search-input">搜索名称、别名或关键词</label><input id="search-input" placeholder="输入名称、别名或关键词…" autocomplete="off"><button aria-label="关闭搜索">Esc</button></form><div class="search-options"><label for="search-kind">搜索范围</label><select id="search-kind"><option value="">全部内容</option><option value="concept">知识介绍</option><option value="report">论文报告</option></select></div><div id="search-results"><p class="empty">可以搜索中文名、英文名、别名或关键词。</p></div></dialog>
+<div id="toast" role="status" hidden></div>
+</body></html>

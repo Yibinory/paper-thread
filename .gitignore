@@ -1,0 +1,27 @@
+# Personal content: never publish the local reading library.
+/data/
+/test_paper/
+/paper_test/
+/web/bundle.js
+/output/
+/.local/
+
+# Local skill installations and agent settings.
+/.agents/
+/.codex/
+
+# Environments, credentials, caches and OS files.
+.venv/
+venv/
+.env
+.env.*
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.sqlite3-*
+*.log
+.DS_Store
+Thumbs.db
+.pytest_cache/
+.idea/
+.vscode/

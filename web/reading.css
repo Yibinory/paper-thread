@@ -1,0 +1,84 @@
+/* Semantic reading hierarchy, shared by reports, knowledge pages and drawers. */
+:root {
+  --ink: #292c2c;
+  --muted: #6b706f;
+  --heading: #304f55;
+  --subheading: #3d6280;
+  --emphasis: #34614f;
+  --formula: #66517e;
+  --explanation: #53646b;
+  --note-bg: #f1f5f7;
+  --error: #972f2d;
+  --error-bg: #fcf2ee;
+  --caution: #845318;
+  --caution-bg: #faf6ed;
+  --warm: #935b33;
+}
+body.dark {
+  --ink: #e0e7e2;
+  --muted: #acbdb2;
+  --heading: #9ed8c8;
+  --subheading: #accdf5;
+  --emphasis: #aad8bd;
+  --formula: #d0c3fa;
+  --explanation: #b5cce1;
+  --note-bg: #253644;
+  --error: #ffb5aa;
+  --error-bg: #3c2b29;
+  --caution: #f0ca8a;
+  --caution-bg: #383326;
+  --warm: #e0b184;
+}
+.article h1, .drawer h1 { color: var(--ink); }
+.prose h2 { color: var(--heading); }
+.prose h3, .prose h4 { color: var(--subheading); }
+.article .lead, .drawer .lead { color: var(--explanation); }
+.prose strong, .prose b { color: var(--emphasis); }
+.prose em { color: var(--explanation); }
+.prose li::marker { color: var(--subheading); font-weight: 600; }
+.prose th { color: var(--heading); }
+.prose td:first-child { color: var(--subheading); font-weight: 500; }
+.prose code, .prose .katex { color: var(--formula); }
+.prose .katex-display {
+  background: transparent;
+  border-left: 1px solid var(--line);
+  padding: 12px;
+}
+.prose blockquote { color: var(--explanation); }
+.prose summary { color: var(--subheading); font-weight: 500; }
+.reading-note {
+  --note-color: var(--subheading);
+  margin: 25px 0;
+  padding: 17px 20px;
+  background: var(--note-bg);
+  border: 0;
+  border-left: 2px solid var(--note-color);
+  border-radius: 0;
+  font-size: .95em;
+}
+.reading-note[data-note="conclusion"] { --note-color: var(--emphasis); background: var(--soft); }
+.reading-note[data-note="error"] { --note-color: var(--error); background: var(--error-bg); }
+.reading-note[data-note="uncertain"], .reading-note[data-note="scope"] {
+  --note-color: var(--caution);
+  background: var(--caution-bg);
+}
+.prose .reading-note > h3 { color: var(--note-color); font-size: 17px; line-height: 1.7; margin: 0 0 10px; }
+.reading-note p:first-of-type { margin-top: 8px; }
+.reading-note p:last-child { margin-bottom: 0; }
+.prose .reading-note strong { color: var(--note-color); }
+.prose .reading-note .katex-display { margin: 15px 0; }
+@media (max-width: 700px) {
+  .reading-note { padding: 14px 16px; }
+  .prose .katex-display { padding: 10px 7px; }
+}
+@media print {
+  :root, body.dark {
+    --bg: #fff; --accent: #222; --warm: #444; --line: #bbb;
+    --ink: #111; --heading: #111; --subheading: #222; --emphasis: #111;
+    --formula: #222; --explanation: #333; --muted: #444;
+    --paper: #fff; --soft: #fff; --note-bg: #fff;
+    --error: #111; --error-bg: #fff; --caution: #222; --caution-bg: #fff;
+  }
+  .reading-note { border-color: #777; box-shadow: none; }
+  .prose .katex-display { border-color: #777; }
+}

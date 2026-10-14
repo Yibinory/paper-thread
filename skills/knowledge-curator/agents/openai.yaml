@@ -1,0 +1,4 @@
+interface:
+  display_name: "知识维护"
+  short_description: "追溯原始工作，编写并审核从原理到应用、变体的详细知识教程"
+  default_prompt: "使用 $knowledge-curator 识别这个概念，检索原始工作与权威资料，编写面向零基础的详细教程，完成来源、正确性、理解与链接审核后返回引用。"

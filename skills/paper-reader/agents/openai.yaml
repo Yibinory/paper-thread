@@ -1,0 +1,4 @@
+interface:
+  display_name: "论文精读"
+  short_description: "生成可独立阅读的论文报告，在知识实际应用处链接本地知识库"
+  default_prompt: "使用 $paper-reader 从这篇论文及必要补充材料生成 HTML 讲解，复用知识库，并完成读者理解复审。"
