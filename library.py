@@ -16,7 +16,17 @@ import time
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent
+PDF_DIRECTORIES = ('data/papers', 'test_paper')
 ID_RE = re.compile(r'^[a-z][a-z0-9-]{1,79}$')
+
+
+def is_local_paper(root, relative):
+    if not relative or Path(relative).is_absolute():
+        return False
+    target = (Path(root) / relative).resolve()
+    return target.is_file() and any(
+        target.is_relative_to((Path(root) / directory).resolve())
+        for directory in PDF_DIRECTORIES)
 
 
 class TextParser(HTMLParser):
@@ -84,7 +94,7 @@ class Library:
         self.data = self.root / 'data'
         self.local = self.root / '.local'
         self.local.mkdir(exist_ok=True)
-        for directory in ('data/reports', 'data/concepts', 'data/figures', 'data/reviews', 'data/revisions', 'test_paper'):
+        for directory in ('data/reports', 'data/concepts', 'data/figures', 'data/reviews', 'data/revisions', 'data/papers'):
             (self.root / directory).mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.reload()
@@ -207,11 +217,11 @@ class Library:
             source_ids = {s['id'] for s in doc.get('sources', [])}
             for source in doc.get('sources', []):
                 url = source.get('url','')
-                if not re.match(r'^(https?://|/test_paper/)', url):
+                local_url = any(url.startswith('/' + directory + '/') for directory in PDF_DIRECTORIES)
+                if not re.match(r'^https?://', url) and not local_url:
                     err('Invalid source URL ' + url)
-                elif url.startswith('/test_paper/'):
-                    target = (self.root / unquote(urlsplit(url).path).lstrip('/')).resolve()
-                    if not target.is_relative_to((self.root / 'test_paper').resolve()) or not target.is_file():
+                elif local_url:
+                    if not is_local_paper(self.root, unquote(urlsplit(url).path).lstrip('/')):
                         err('Missing/invalid local source ' + url)
             for ref in parser.links:
                 target = ref.get('data-concept')
@@ -245,8 +255,7 @@ class Library:
                     if not target.is_relative_to((self.root / 'data/figures').resolve()) or not target.is_file():
                         err('Missing/invalid image ' + image)
             if doc.get('paper'):
-                pdf = (self.root / doc['paper'].get('pdf','')).resolve()
-                if not pdf.is_relative_to((self.root / 'test_paper').resolve()) or not pdf.is_file():
+                if not is_local_paper(self.root, doc['paper'].get('pdf','')):
                     err('Missing/invalid PDF')
             for dep in doc.get('prerequisites', []):
                 if dep not in docs or docs[dep].get('kind') != 'concept':

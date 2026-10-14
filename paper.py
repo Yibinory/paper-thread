@@ -11,7 +11,8 @@ from pathlib import Path
 from socketserver import TCPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 import zipfile
-from library import Library, ROOT, digest, write_json
+from library import Library, ROOT, PDF_DIRECTORIES, digest, write_json
+from paper_sources import import_paper
 
 
 class LocalHTTPServer(ThreadingHTTPServer):
@@ -122,7 +123,9 @@ def export(lib, destination):
         else:
             shutil.copy2(item, destination/item.name)
     shutil.copytree(ROOT/'data/figures',destination/'data/figures',dirs_exist_ok=True)
-    shutil.copytree(ROOT/'test_paper',destination/'test_paper',dirs_exist_ok=True)
+    for directory in PDF_DIRECTORIES:
+        if (ROOT/directory).is_dir():
+            shutil.copytree(ROOT/directory,destination/directory,dirs_exist_ok=True)
     archive = destination.with_suffix('.zip')
     with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
         for file in destination.rglob('*'):
@@ -210,10 +213,9 @@ def serve(lib, port):
 
         def translate_path(self, path):
             path=unquote(urlsplit(path).path)
-            if path.startswith('/test_paper/'):
-                base=ROOT/'test_paper'; suffix=path[len('/test_paper/'):]
-            elif path.startswith('/data/figures/'):
-                base=ROOT/'data/figures';suffix=path[len('/data/figures/'):]
+            directory = next((d for d in (*PDF_DIRECTORIES, 'data/figures') if path.startswith('/'+d+'/')), None)
+            if directory:
+                base=ROOT/directory;suffix=path[len('/'+directory+'/'):]
             else:
                 base=ROOT/'web';suffix=path.lstrip('/') or 'index.html'
             target=(base/suffix).resolve()
@@ -243,6 +245,9 @@ def main():
     p=argparse.ArgumentParser(description='Local paper reports and reusable knowledge')
     sub=p.add_subparsers(dest='command',required=True)
     s=sub.add_parser('serve');s.add_argument('--port',type=int,default=8765)
+    s=sub.add_parser('import-paper',help='Import a local PDF or a direct PDF URL; the agent resolves paper pages first')
+    s.add_argument('source');s.add_argument('--source-url',help='Original paper page for provenance')
+    s.add_argument('--max-mb',type=int,default=100,help='Maximum imported file size in MiB (default: 100)')
     s=sub.add_parser('search');s.add_argument('query');s.add_argument('--context',default='');s.add_argument('--kind',choices=['concept','report']);s.add_argument('--limit',type=int,default=6)
     s=sub.add_parser('get');s.add_argument('id');s.add_argument('--revision')
     s=sub.add_parser('save');s.add_argument('file');s.add_argument('--expected-revision')
@@ -256,7 +261,8 @@ def main():
     args=p.parse_args();lib=Library()
     try:
         if args.command=='serve':return serve(lib,args.port)
-        if args.command=='search':out=lib.search(args.query,args.context,args.kind,args.limit)
+        if args.command=='import-paper':out=import_paper(lib.root,args.source,args.source_url,args.max_mb*1024*1024)
+        elif args.command=='search':out=lib.search(args.query,args.context,args.kind,args.limit)
         elif args.command=='get':out=lib.get(args.id,args.revision)
         elif args.command=='catalog':out=lib.catalog()
         elif args.command=='save':out=lib.save(json.loads(Path(args.file).read_text(encoding='utf-8')),args.expected_revision)

@@ -1,11 +1,25 @@
 ---
 name: paper-reader
-description: 从论文与一手材料生成可独立理解的中文 HTML 报告，复用知识库，逐项核查主张、公式、推理与结论，指出错误和证据边界，并检查覆盖与读者理解。适用于论文讲解、整篇重新生成及阅读反馈后的再生成。
+description: 接收论文链接、附件或本地 PDF，获取原文并生成可独立理解的中文 HTML 报告，复用知识库，逐项核查主张、公式、推理与结论，指出错误和证据边界，并检查覆盖与读者理解。适用于论文讲解、整篇重新生成及阅读反馈后的再生成。
 ---
 
 # Paper Reader
 
 Locate the PaperThread project root containing both `paper.py` and `CONTENT_SCHEMA.md`: first inspect the current workspace and its ancestors, then the resolved skill path and its ancestors. Do not assume this skill is a symlink or that a user-level installation contains the application. If no project is available, ask for its location. Run commands from that root with Python 3.10+: `python3` on macOS/Linux, `py -3` or `python` on Windows, or the project virtual environment (`.venv/bin/python` / `.venv/Scripts/python.exe`). The examples below use `python3`; substitute the available interpreter. Read and write content files as UTF-8. Read the schema and [writing guide](references/report-writing.md). The calling agent reads, reasons, browses and writes; the local tool stores and retrieves documents. There is no local language/embedding model to install or index to build.
+
+## Accept a paper link or file and manage the source
+
+Accept paper landing-page links (including DOI/arXiv/publisher pages), direct PDF URLs, accessible attachments, local PDF paths anywhere the agent can read, and batches of these inputs. Do not require the user to download, rename or move files into the project, or create storage directories.
+
+For a paper page, open it and locate the full-text PDF using the agent's browser/search tools; verify title, authors and the requested version. Resolve redirects and select an accessible primary source rather than guessing a PDF URL. Then import the resolved PDF:
+
+```sh
+python3 paper.py import-paper "RESOLVED_PDF_URL" --source-url "ORIGINAL_PAPER_PAGE_URL"
+```
+
+For a direct PDF URL or local file, use `import-paper "URL_OR_LOCAL_PATH"`; a local file is copied, not moved. An attachment can first be obtained using the host's normal attachment tools, then imported. If an authenticated browser download is needed, import that downloaded file and pass the public paper page as `--source-url`. Do not ask the user to reorganize their files as a fallback. If full text is genuinely inaccessible after checking available primary sources, explain the access gap; do not substitute an abstract-only account for a full report.
+
+The importer creates `data/papers/` automatically, returns the managed `pdf` path, local source `url` and `sha256`, and records origins under `.local/imports/`. It deduplicates identical bytes; this does not determine whether two versions belong to the same paper. It checks the PDF header, not scientific identity or completeness: open and read the imported file, verify the actual version/page count and inspect formulas and figures before relying on it. Use returned paths instead of inventing filenames. Retain the original public link in the report's sources and `paper.source_url` when available, and record `paper.sha256`. Put extraction and drafts under `.local/`; create needed directories yourself. Existing reports using `test_paper/` remain valid and need no migration.
 
 ## What the reader must be able to do
 

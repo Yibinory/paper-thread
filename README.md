@@ -229,58 +229,54 @@ python3 scripts/install_skills.py --update
 
 ## 生成第一篇报告
 
-### 1. 放入论文
+### 1. 直接把链接或文件路径交给 Agent
 
-将 PDF 放进项目根目录下的 **`test_paper/`**。如果尚未启动过网站，手动新建这个文件夹即可。
+**不需要先下载 PDF，也不需要创建文件夹或把文件移进项目。** 安装 skill 并让 Agent 打开本项目后，直接提供以下任意一种输入：
 
-```text
-paper-thread/
-└── test_paper/
-    └── example.pdf
-```
+- 论文网页链接，例如 arXiv 摘要页、DOI 链接或出版社的论文页面。
+- 可直接下载的 PDF 链接。
+- 本机任意可访问位置的 PDF 路径，或 Agent 能读取的附件。
+- 多个论文链接、一组文件，或一个包含论文的文件夹。
 
-这里使用 `example.pdf` 作为文件名示例，仓库不提供这篇论文。文件名可以包含中文和空格，在终端命令中引用时加引号。
-
-### 2. 可选：安装本地 PDF 提取工具
-
-如果 Agent 自己已有可用的 PDF 读取能力，可以使用它。使用仓库的 `scripts/extract_pdf.py` 时，需要安装 `requirements.txt` 中的 `pypdf` 和 `pdfplumber`。
-
-Windows：
-
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe scripts/extract_pdf.py "test_paper/example.pdf" --out ".local/extracted/example" --render 1 2
-```
-
-macOS / Linux：
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python scripts/extract_pdf.py "test_paper/example.pdf" --out ".local/extracted/example" --render 1 2
-```
-
-`--render 1 2` 表示额外渲染第 1、2 页，不需要图片时可以省略。提取文本不能替代对公式、图表和版面的检查。以上命令直接使用虚拟环境解释器，不要求先激活环境。
-
-### 3. 在 Agent 会话中调用 skill
-
-把下面这段发给已经打开本项目的 Agent，**不是粘贴到系统终端**：
+把下面这段发给 Agent，**不是粘贴到系统终端**。将占位符替换为实际链接：
 
 ```text
-请使用 $paper-reader 阅读 test_paper/example.pdf，生成一份中文论文报告。
-面向没有读过这篇论文、也可能第一次接触该领域的读者。
-按需复用知识库；缺少的知识请使用 $knowledge-curator 检索、编写并审核。
-完成整篇论证组织、读者理解、原文覆盖和正确性检查后，发布到当前论文库。
+请使用 $paper-reader 阅读这篇论文：<论文网页或 PDF 链接>。
+生成一份中文报告，面向没有读过这篇论文、也可能第一次接触该领域的读者。
+请自行获取原文并整理到本地阅读库；按需使用 $knowledge-curator 补齐知识。
+完成整篇论证组织、读者理解、原文覆盖和正确性检查后发布报告。
 ```
 
-也可以请求处理多篇论文：
+本地文件也可以直接指定，无须移动：
 
 ```text
-请使用 $paper-reader 依次阅读 test_paper 中的所有 PDF。
-为每篇论文生成报告，复用已有知识，按需补充知识教程。
-同一论文只保留一个当前报告入口，完成审核后再发布。
+请使用 $paper-reader 阅读我下载目录里的“example.pdf”，生成报告。
+请自行定位可访问的文件、保存原文副本并复用知识库。
 ```
+
+如果 Agent 无法从当前环境定位“下载目录”，给出文件的完整路径即可，例如 Windows 的 `C:\Users\你的用户名\Downloads\example.pdf`。处理多篇论文时，可以说：
+
+```text
+请使用 $paper-reader 依次阅读下面这些论文链接：
+<链接一>
+<链接二>
+请自行获取原文，为每篇论文生成报告，复用已有知识并补充缺少的教程。
+同一论文沿用同一个报告入口，完成审核后再发布。
+```
+
+### 2. Agent 自动获取、归档和阅读
+
+Agent 会先核对论文身份与版本。网页链接由 Agent 找到对应全文 PDF；PDF 链接由工具下载；本地文件则复制一份到阅读库，不移动或修改原文件。需要的目录由程序自动创建。
+
+原文默认保存到 `data/papers/`，按文件内容识别完全相同的副本；来源、文件校验值和原始链接会记录下来。下载后的文件仍需由 Agent 打开，检查实际内容和页数，再进入阅读、知识补充及审核流程。网页返回登录页或摘要时，不会把它冒充为 PDF。
+
+这是内部文件管理方式，日常使用不需要自己操作这些目录。旧的 `test_paper/` 只用于兼容已有阅读库，不是新用户的必需步骤。遇到确实无法访问的全文，Agent 会说明缺少的材料及原因。
+
+### 3. 在网站中阅读
+
+Agent 完成保存、校验与构建后，启动网站或刷新已打开的页面，就能看到报告和知识页。网页不要求在生成时一直运行，Agent 可以直接调用本地命令行工具。
+
+每篇论文只有一份当前报告。重新生成时沿用原来的文档 ID 和阅读链接，不建立版本对比页；已有笔记与阅读状态单独保存。
 
 知识教程也可以独立生成或完善：
 
@@ -291,11 +287,31 @@ python3 -m venv .venv
 遇到需要单独展开的基础知识，请按需补齐并审核，再提供链接。
 ```
 
-### 4. 在网站中阅读
+### 可选：安装本地 PDF 提取工具
 
-Agent 完成保存、校验与构建后，启动网站或刷新已打开的页面，就能看到报告和知识页。网页不要求在生成时一直运行，Agent 可以直接调用本地命令行工具。
+如果 Agent 自己已有可用的 PDF 读取能力，可以使用它。使用仓库的 `scripts/extract_pdf.py` 时，需要安装 `requirements.txt` 中的 `pypdf` 和 `pdfplumber`。这不要求你先整理 PDF。
 
-每篇论文只有一份当前报告。重新生成时沿用原来的文档 ID 和阅读链接，不建立版本对比页；已有笔记与阅读状态单独保存。
+Windows：
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+macOS / Linux：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+Agent 随后使用导入工具返回的真实路径执行提取，例如：
+
+```bash
+python3 scripts/extract_pdf.py "<导入后返回的 PDF 路径>" --out ".local/extracted/example" --render 1 2
+```
+
+`--render 1 2` 表示额外渲染第 1、2 页，不需要图片时可以省略。使用已安装依赖的虚拟环境解释器替换上面的 `python3`。提取文本不能替代对公式、图表和版面的检查。
 
 ## 报告与知识介绍如何生成
 
@@ -347,9 +363,10 @@ Agent 完成保存、校验与构建后，启动网站或刷新已打开的页�
 | `data/figures/` | 本地配图 | 否 |
 | `data/reviews/` | 来源、覆盖、正确性和理解审核记录 | 否 |
 | `data/revisions/` | 内部内容快照、引用依据 | 否 |
-| `test_paper/` | 原始论文 PDF | 否 |
+| `data/papers/` | Agent 自动下载或复制的原文 PDF | 否 |
+| `test_paper/` | 旧阅读库的原始 PDF（兼容目录） | 否 |
 | `.local/reader.sqlite3` | 笔记与阅读状态 | 否 |
-| `.local/` 其余内容 | 草稿、提取文本、审阅包、缓存等 | 否 |
+| `.local/` 其余内容 | 导入来源记录、草稿、提取文本、审阅包、缓存等 | 否 |
 | `web/bundle.js` | 构建得到的阅读数据，包含笔记 | 否 |
 | `output/` | 导出包、截图等 | 否 |
 | `.agents/` | 本机安装的 skills 及备份 | 否 |
@@ -362,7 +379,7 @@ Agent 完成保存、校验与构建后，启动网站或刷新已打开的页�
 ### 备份与换电脑
 
 1. 停止本地服务，避免复制过程中笔记仍被写入。
-2. 备份 `data/`、`test_paper/` 和 `.local/`。如只要已发布内容与笔记，至少保留前两个目录和 `.local/reader.sqlite3`。
+2. 备份 `data/` 和 `.local/`；如果已有旧的 `test_paper/`，也一起备份。`data/` 已包含自动归档的原文；`.local/` 包含笔记、导入来源和工作记录。
 3. 在新电脑下载项目，将这些目录放回相同位置，再启动网站。
 4. `.venv/` 不必复制，按新电脑系统重新建立。需要继续用 Agent 时，也重新运行 skill 安装脚本。
 
@@ -382,7 +399,7 @@ python3 paper.py export
 
 默认输出 `output/offline-reader/index.html` 和 `output/offline-reader.zip`。完整解压后可直接打开其中的 `index.html` 阅读。
 
-**导出包会包含当前报告、知识、笔记、图像及 `test_paper/` 下的 PDF**，分享前应检查内容；它不属于 GitHub 发布文件。副本中新写的笔记保存在当前浏览器，不会自动回写到原服务，可通过笔记导出 / 导入迁移。便携副本用于阅读，不用于执行联网生成流程。
+**导出包会包含当前报告、知识、笔记、图像及自动归档的 PDF（也包含旧 `test_paper/` 中的文件）**，分享前应检查内容；它不属于 GitHub 发布文件。副本中新写的笔记保存在当前浏览器，不会自动回写到原服务，可通过笔记导出 / 导入迁移。便携副本用于阅读，不用于执行联网生成流程。
 
 ### 更新程序
 
@@ -420,6 +437,7 @@ Agent 编写内容时还会使用：
 
 | 命令 | 用途 |
 | --- | --- |
+| `import-paper SOURCE [--source-url URL]` | 导入直链 PDF 或任意本地 PDF，自动建立目录并返回路径；网页链接先由 Agent 解析 |
 | `get ID` | 读取文档及当前 revision |
 | `save FILE` | 保存新文档 |
 | `save FILE --expected-revision REV` | 更新文档，防止覆盖已变化的内容 |
@@ -442,6 +460,7 @@ paper-thread/
 ├── run.command               macOS / Linux 启动入口
 ├── paper.py                  命令行与本地 HTTP 服务
 ├── library.py                文档存储、引用、搜索与笔记
+├── paper_sources.py          原文下载、复制、去重及来源记录
 ├── interactions.py           交互配置校验
 ├── skills/
 │   ├── paper-reader/         论文阅读与审核工作流
@@ -456,7 +475,7 @@ paper-thread/
 └── .github/workflows/        多系统自动测试
 ```
 
-`data/`、`test_paper/`、`.local/` 等个人目录在首次运行时创建，不存在于仓库中。
+`data/`、`.local/` 等个人目录由程序自动创建，不存在于仓库中。`test_paper/` 仅兼容旧内容，新安装不需要它。
 
 ### 验证
 
@@ -480,7 +499,7 @@ GitHub Actions 配置了 Windows、macOS 和 Linux 的测试，包括不携带�
 
 **启动后没有任何报告，是不是安装失败？**
 
-不是。公开仓库不带个人内容。先安装 skills，再让 Agent 阅读放入 `test_paper/` 的论文；完成发布后刷新页面。
+不是。公开仓库不带个人内容。先安装 skills，再把论文链接或本地文件路径交给 Agent；完成发布后刷新页面。
 
 **出现“Python 未找到”，或者双击 Windows 脚本报错？**
 
@@ -504,7 +523,7 @@ GitHub Actions 配置了 Windows、macOS 和 Linux 的测试，包括不携带�
 
 **能否在网站直接上传 PDF 并自动生成？**
 
-当前没有这个流程。请将 PDF 放入 `test_paper/`，通过 Agent 调用 skill；网站用于阅读和管理生成结果。
+当前没有网页上传生成按钮。直接把论文链接、附件或本地文件路径交给 Agent 调用 skill 即可，获取和归档由 Agent 与工具完成；网站用于阅读和管理生成结果。
 
 **如何改进一份读不懂的报告？**
 

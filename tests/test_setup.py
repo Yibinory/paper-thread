@@ -10,6 +10,7 @@ import tempfile
 import time
 import unittest
 from unittest.mock import patch
+import zipfile
 from urllib.request import ProxyHandler, build_opener
 
 from library import Library, write_json
@@ -65,7 +66,7 @@ class FreshCheckoutTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name) / '文脉 with spaces'
         self.root.mkdir()
-        for name in ('paper.py', 'library.py', 'interactions.py', 'run.bat', 'run.command'):
+        for name in ('paper.py', 'paper_sources.py', 'library.py', 'interactions.py', 'run.bat', 'run.command'):
             shutil.copy2(ROOT / name, self.root / name)
         shutil.copytree(ROOT / 'scripts', self.root / 'scripts', ignore=shutil.ignore_patterns('__pycache__'))
         shutil.copytree(ROOT / 'web', self.root / 'web', ignore=shutil.ignore_patterns('bundle.js'))
@@ -93,6 +94,25 @@ class FreshCheckoutTests(unittest.TestCase):
         write_json(self.root / '文脉.json', {'title': '知识介绍：测量 α → β'})
         # The bytes on disk must be UTF-8, independent of the host default encoding.
         self.assertEqual(json.loads((self.root / '文脉.json').read_bytes())['title'], '知识介绍：测量 α → β')
+
+    def import_external_pdf(self):
+        source = self.root.parent / '下载的论文.pdf'
+        source.write_bytes(b'%PDF-1.4\n% import test fixture\n%%EOF\n')
+        result = subprocess.run([sys.executable, 'paper.py', 'import-paper', str(source)], cwd=self.root,
+                                env={**os.environ, 'PYTHONIOENCODING': 'cp1252'},
+                                capture_output=True, encoding='utf-8', timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(source.is_file())
+        return json.loads(result.stdout), source.read_bytes()
+
+    def test_imported_pdf_is_in_portable_export(self):
+        imported, contents = self.import_external_pdf()
+        result = subprocess.run([sys.executable, 'paper.py', 'export'], cwd=self.root,
+                                capture_output=True, encoding='utf-8', timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with zipfile.ZipFile(self.root / 'output/offline-reader.zip') as archive:
+            self.assertEqual(archive.read(imported['pdf']), contents)
+            self.assertFalse(any('.local/' in name for name in archive.namelist()))
 
     def test_native_launcher_serves_empty_site(self):
         with socket.socket() as sock:
@@ -125,6 +145,16 @@ class FreshCheckoutTests(unittest.TestCase):
                     self.assertIn('文脉 · PaperThread', response.read().decode('utf-8'))
                 with opener.open(base + '/bundle.js') as response:
                     self.assertIn('"documents": {}', response.read().decode('utf-8'))
+                imported, contents = self.import_external_pdf()
+                with opener.open(base + imported['url']) as response:
+                    self.assertEqual(response.read(), contents)
+                # Previously generated reports keep working without a migration.
+                (self.root / 'test_paper').mkdir()
+                (self.root / 'test_paper/legacy.pdf').write_bytes(contents)
+                with opener.open(base + '/test_paper/legacy.pdf') as response:
+                    self.assertEqual(response.read(), contents)
+                with self.assertRaises(OSError):
+                    opener.open(base + '/data/papers/../../.local/reader.sqlite3')
             finally:
                 if os.name == 'nt':
                     subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'], capture_output=True)
