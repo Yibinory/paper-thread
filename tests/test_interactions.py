@@ -18,6 +18,20 @@ class InteractionTests(unittest.TestCase):
         d=self.doc();d['sections'][0]['html']='<div data-interactive="distance"></div>'
         self.assertIn('Interactive needs static fallback text',validate_interactives(d))
 
+    def test_logit_example_validates_domain_and_nonfinite_inputs(self):
+        d=self.doc()
+        c={'type':'regularized-logit','title':'权重','question':'观察最优变化','provenance':'教学算例',
+           'parameters':{'fixed_logit':.5,'initial_feature':1,'feature_weight':1.5,'max_shift':2},
+           'lambda_range':{'min':0,'max':.8,'step':.01,'initial':.2},'feature_label':'背景'}
+        d['interactives']['distance']=c
+        self.assertEqual(validate_interactives(d),[])
+        for field,value in [('max_shift',0),('feature_weight',-1),('fixed_logit',float('nan')),('initial_feature',True)]:
+            bad=copy.deepcopy(d);bad['interactives']['distance']['parameters'][field]=value
+            self.assertTrue(validate_interactives(bad))
+        for field,value in [('max',0),('step',0),('initial',1),('min',-.1)]:
+            bad=copy.deepcopy(d);bad['interactives']['distance']['lambda_range'][field]=value
+            self.assertTrue(validate_interactives(bad))
+
     def test_calculations_reject_invalid_parameters(self):
         for v in [float('nan'),-1,None,True]:
             d=self.doc();d['interactives']['distance']['values'][0]=v

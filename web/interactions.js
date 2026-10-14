@@ -15,6 +15,30 @@ function rabitqBound(p,epsilon,budget,threshold){
   const radius=2*p.ro*p.rq*(E+budget),lower=estimate-radius;
   return {E,estimate,radius,lower,prune:lower>threshold};
 }
+// A stated teaching model: y=1, b'=b-omega, z=fixed_logit+w*b'.
+// Enumerate a finite grid; this is not a simulation of neural-network training.
+function logitPoint(p,lambda,omega){
+  const feature=p.initial_feature-omega,z=p.fixed_logit+p.feature_weight*feature;
+  const probability=z>=0?1/(1+Math.exp(-z)):Math.exp(z)/(1+Math.exp(z));
+  const loss=Math.max(-z,0)+Math.log1p(Math.exp(-Math.abs(z)));
+  return {omega,feature,z,probability,loss,penalty:lambda*omega*omega,
+    objective:loss-lambda*omega*omega,gradient:p.feature_weight*(1-probability)-2*lambda*omega};
+}
+function regularizedLogit(p,lambda){
+  const points=Array.from({length:401},(_,i)=>logitPoint(p,lambda,p.max_shift*i/400));
+  const best=points.reduce((a,b)=>b.objective>a.objective?b:a);
+  return {points,best,original:points[0],gridStep:p.max_shift/400};
+}
+function logitFigure(c,lambda){
+  const p=c.parameters,r=regularizedLogit(p,lambda),high=regularizedLogit(p,c.lambda_range.max);
+  const lo=Math.min(0,...high.points.map(d=>d.objective))-.12,hi=Math.max(...r.points.map(d=>d.loss))+.2;
+  const X=v=>58+v/p.max_shift*440,Y=v=>218-(v-lo)/(hi-lo)*180;
+  const path=key=>r.points.map((d,i)=>`${i?'L':'M'}${X(d.omega).toFixed(2)},${Y(d[key]).toFixed(2)}`).join(' ');
+  const xs=[0,p.max_shift/2,p.max_shift],ys=[lo,(lo+hi)/2,hi];
+  const ticks=xs.map(x=>`<text x="${X(x)}" y="242" text-anchor="middle">${fixed(x,1)}</text>`).join('')+ys.map(y=>`<path class="plot-grid" d="M58 ${Y(y)}H498"/><text x="48" y="${Y(y)+5}" text-anchor="end">${fixed(y,1)}</text>`).join('');
+  const b=r.best;
+  return `<div class="mechanism-plot" tabindex="0" role="region" aria-label="目标曲线，可横向滚动"><svg viewBox="0 0 550 275" role="img" aria-label="惩罚权重 ${fixed(lambda,2)} 时，网格最优强度 ${fixed(b.omega,3)}，正确类概率 ${fixed(b.probability,3)}。虚线是分类损失，实线是扣除距离惩罚的目标。"><text x="58" y="22">损失 / 目标值</text>${ticks}<path class="plot-axis" d="M58 38V218H498"/><path class="plot-zero" d="M58 ${Y(0)}H498"/><path class="plot-loss" d="${path('loss')}"/><path class="plot-objective" d="${path('objective')}"/><path class="plot-guide" d="M${X(b.omega)} 38V218"/><circle class="plot-selected" cx="${X(b.omega)}" cy="${Y(b.objective)}" r="5"/><text x="498" y="266" text-anchor="end">变化强度 ω</text></svg></div><div class="plot-legend"><span class="role-objective">虚线：分类损失 CE</span><span class="role-transform">实线：J = CE − λω²</span><span>圆点：401 个网格点中最大值</span></div><div class="feature-track"><div>${esc(c.feature_label)}：<span class="role-input">原值 ${fixed(p.initial_feature,1)}</span> → <span class="role-transform">变换后 ${fixed(b.feature,3)}</span></div><div class="feature-axis"><span class="feature-origin" style="left:100%" aria-hidden="true"></span><span class="feature-chosen" style="left:${100*(1-b.omega/p.max_shift)}%" aria-hidden="true"></span></div><div class="feature-ends"><span>${fixed(p.initial_feature-p.max_shift,1)}</span><span>${fixed(p.initial_feature,1)}</span></div></div><p class="mechanism-readout" aria-live="polite" aria-atomic="true">ω ≈ ${fixed(b.omega,3)}，分类得分 z = ${fixed(b.z,3)}，<span class="role-prediction">正确类概率 ${fixed(b.probability,3)}</span>。CE ${fixed(b.loss,3)} − 惩罚 ${fixed(b.penalty,3)} = J ${fixed(b.objective,3)}。${b.probability<.5?'此时示例分类器预测错误。':'此时示例分类器仍预测正确。'}</p>`;
+}
 function stepHTML(s){return `<h4>${esc(s.label)}</h4><p>${esc(s.caption)}</p><div class="state-grid">${s.states.map(x=>`<div class="state-cell ${esc(x.state)}"><span>${esc(x.label)}</span><b>${esc(x.value)}</b></div>`).join('')}</div><dl class="trace-explanation"><dt>本步改变</dt><dd>${esc(s.changes)}</dd><dt>保持不变</dt><dd>${esc(s.holds)}</dd><dt>为什么接着这样做</dt><dd>${esc(s.reason)}</dd></dl>`;}
 function render(host,c){
   if(!c)return;
@@ -24,7 +48,16 @@ function render(host,c){
     panel.innerHTML=`<div class="interactive-kicker">${esc(c.provenance)}</div><h3>${esc(c.title)}</h3><p class="interaction-question">${esc(c.question)}</p><div class="interaction-controls"></div><div class="interaction-body"></div><button class="interaction-reset" type="button">恢复初始状态</button>`;
     const controls=panel.querySelector('.interaction-controls'),body=panel.querySelector('.interaction-body');
     let reset;
-    if(c.type==='trace'){
+    if(c.type==='regularized-logit'){
+      panel.classList.add('mechanism-ui');
+      const r=c.lambda_range;
+      controls.innerHTML=`<label class="mechanism-control">距离惩罚 λ <input type="range" min="${r.min}" max="${r.max}" step="${r.step}" value="${r.initial}" aria-label="距离惩罚权重 λ"><output>${fixed(r.initial,2)}</output></label>`;
+      const input=controls.querySelector('input'),output=controls.querySelector('output');
+      const update=()=>{output.textContent=fixed(+input.value,2);body.innerHTML=logitFigure(c,+input.value);};
+      input.oninput=update;reset=()=>{input.value=String(r.initial);update();};
+      // Keep the whole figure above its control, with stable input focus on redraw.
+      body.after(controls);
+    } else if(c.type==='trace'){
       let step=0;
       controls.innerHTML=`<div class="step-nav" role="group" aria-label="${esc(c.title)}步骤">${c.steps.map((s,i)=>`<button type="button" data-step="${i}" aria-pressed="${i===0}"><span>${i+1}</span>${esc(s.label)}</button>`).join('')}</div>`;
       const update=()=>{controls.querySelectorAll('[data-step]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.step===step)));body.innerHTML=`<div class="trace-state" aria-live="polite" aria-atomic="true">${stepHTML(c.steps[step])}</div>`;};
@@ -50,6 +83,6 @@ function render(host,c){
     host.innerHTML='';const staticText=document.createElement('div');staticText.className='interactive-fallback';staticText.innerHTML=fallback;host.append(panel,staticText);host.classList.add('interactive','enhanced');
   } catch(e){host.innerHTML=fallback;console.warn('Interactive fallback retained',e);}
 }
-const api={render,pqBound,rabitqBound};global.PaperInteractions=api;
+const api={render,pqBound,rabitqBound,logitPoint,regularizedLogit};global.PaperInteractions=api;
 if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

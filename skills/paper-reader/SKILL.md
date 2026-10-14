@@ -37,6 +37,8 @@ If a central sentence cannot be explained, first locate the missing definition o
 
 Treat the paper itself as fallible. Apply the [correctness audit](references/correctness-audit.md): inventory and examine every scientific claim, formula (including inline and appendix equations), inference and conclusion, not only headline contributions. Independently derive/recalculate where possible, inspect source conditions and primary dependencies, and distinguish confirmed errors, unsupported scope, ambiguity/inconsistency and unverified items. Keep source locators and a detailed item-level ledger. Do not hide inconsistent notation or an unsupported proof step, silently repair the original, or claim exhaustive verification from a partial review.
 
+Apply [research decisions and worked mechanisms](references/research-reconstruction.md) to the choices carrying the contribution. Explain what makes a route plausible, a fair simpler alternative, observable failure modes, discriminating diagnostics and repair costs. Carry a small example through the actual calculation/update, not just invented final scores. Distinguish documented statements, reasoned inferences and useful speculation; never invent the authors' research history. These labels describe provenance, not correctness. Integrate this analysis where the main argument needs it, without a compulsory block or widget after every mechanism.
+
 ## Resolve reusable knowledge with the agent
 
 Before outlining, inventory substantive source units using [source coverage and claim audit](references/source-audit.md): methods, assumptions, theory, main and secondary experiments, limitations, and available appendices. An outline derived only from the abstract or the previous report cannot establish coverage.

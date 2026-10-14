@@ -24,6 +24,8 @@ Follow a concrete example through these objects. A loss table with invented numb
 
 ## Explain equations as operations
 
+For the central mechanism, follow the worked-example contract in [research reconstruction](research-reconstruction.md). Calculate an actual intermediate state and its update from explicit inputs, then relate it to the full method. Define shape and fixed/updated status at first use; keep a compact local symbol table when several objects interact. Keep toy inputs, paper measurements and exact derivations visibly distinct. A parameter slider must use the same calculation as the printed example.
+
 Before an equation, state the question it answers. Define symbols, dimensions when relevant, and which quantities are known at that stage. After it, show the non-obvious intermediate step and the resulting decision. Merely defining every letter is insufficient.
 
 Keep the derivation central to a contribution in the report. Put reusable mathematics behind a knowledge link at the moment it is used, with enough local explanation to follow the application. Readers should not have to infer why a theorem applies or why an unavailable quantity can be computed from the stored representation. Distinguish an author theorem, a direct algebraic derivation, and an explanatory reconstruction.
@@ -37,6 +39,8 @@ Describe what changes between compared runs, what is held constant, what the met
 A useful limitation follows from a concrete dependency: an unseen cluster cannot be recovered by reranking; a missing operation cannot generate that style. Place these conditions where needed. Consolidate repeated general cautions into one discussion. Repeating “does not guarantee” after each paragraph adds neither explanation nor rigor.
 
 ## Prose that performs work
+
+Use evidence labels for substantive reconstructions and proposed diagnoses as specified in the research guide. Put a practical diagnostic beside the mechanism whose premise it tests, with an observable symptom and the cost of the proposed repair. Do not add a stock “first version fails” paragraph to every subsection, or infer a private author history from rhetorical wording. Semantic colors distinguish roles and provenance; they do not replace explanation or certify a claim.
 
 Prefer specific subjects and verbs: the classifier supplies a gradient; the table stores a segment minimum; the queue chooses an unexplored hypothesis. Replace abstract praise and verdicts with the intermediate facts that justify them. Do not mechanically rewrite every sentence into “not X but Y.” Read neighboring paragraphs in context: each should develop the current question, establish a necessary premise or contribute a clearly related branch. “Therefore,” “next,” and a repeated keyword do not supply that relation.
 

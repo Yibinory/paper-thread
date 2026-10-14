@@ -40,11 +40,19 @@ For a paper-report finding that needs to stand out, use `<div class="reading-not
 
 ## Structured interactions
 
+### Provenance and mechanism colors
+
+Use `<span class="evidence-tag" data-evidence="source">【文中有据】</span>`, `data-evidence="inference"` with 【推断】, or `data-evidence="hypothesis"` with 【猜测】 for substantive research reconstructions. Attribute source statements with adjacent citations, provide premises for inferences, and distinguish suggested diagnostics from experiments actually run. These labels indicate provenance, not correctness or confidence probabilities. Constructed calculations additionally state 教学算例 and their assumptions. Do not decorate every sentence with a label. Knowledge tutorials continue to teach corrected, justified material directly.
+
+For the few quantities followed across prose and diagrams, `<span class="role-input">…</span>`, `role-transform`, `role-prediction`, and `role-objective` supply stable shared theme colors. Always name the role in words; a color alone must not carry meaning. An optional `<div class="research-note">…</div>` holds a concrete proposed diagnostic beside its mechanism, with visible provenance and costs. It is not a mandatory block.
+
 `interactives` is optional and may be omitted or empty. Use controls only when they explain a relationship better than a direct static presentation. A short sequence or small comparison table does not need an interactive wrapper. Do not impose a widget quota on reports.
 
 Use `interactives` as an object keyed by a stable ID. Put `<div data-interactive="ID"><p>Complete default example and conclusion as static text.</p></div>` at the application point. Every configuration has `type`, `title`, `question` (the action/observation), `provenance` (measured data or constructed calculation, with locator). Add an adjacent normal source link. All configuration strings are plain text and escaped by the shared renderer. No code in configuration. The fallback remains if rendering is unavailable and is printed instead of controls.
 
 Supported contracts in `web/interactions.js` / `interactions.py`:
+
+- `regularized-logit`: a constructed binary classification calculation with true class 1, transformed scalar feature `b' = initial_feature − ω`, fixed contribution `fixed_logit`, logit `z = fixed_logit + feature_weight × b'`, probability `sigmoid(z)`, and objective `log(1+exp(−z)) − λω²`. `parameters` supplies `fixed_logit`, `initial_feature`, positive `feature_weight`, and positive `max_shift` (absolute values ≤20); `lambda_range` supplies `{min,max,step,initial}`, with 0≤min<max≤10; `feature_label` names the changed feature. The renderer draws CE and objective curves on fixed axes and selects the largest of 401 uniformly spaced samples on [0,max_shift]. Explain that this grid maximum is a toy calculation, not the paper's gradient optimizer or a trained neural model. The surrounding text must give the fixed feature contribution, shapes, assumptions, a hand calculation and the example's scope. Use only where this model explains the actual reader difficulty; do not substitute it for arbitrary optimizers.
 
 - `trace`: `steps` (at least two), each `{label,caption,changes,holds,reason,states:[{label,value,state}]}`. `state` is `active`, `fixed`, or `read`. Use the states to expose objects and current values, not duplicate generic prose. Steps can represent an algorithm or explicitly named alternative variants.
 - `evidence`: `measure`, `columns` (nonempty list of header strings including units/directions), `cases:[{label,condition,rows:[{label,values}],takeaway}]`. Values correspond exactly to columns. Conditions and takeaways are visible when selected; do not hide contrary cases from the static text.

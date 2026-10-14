@@ -48,6 +48,8 @@ Before labeling an error, reread local definitions and the original page, attemp
 
 ## Put findings where they matter
 
+Audit the report's added analysis too: a proposed failure, diagnostic, hyperparameter explanation or numerical illustration is a scientific assertion even when absent from the paper. Retain its assumptions, calculation and provenance in the ledger. Check table gains against rounding and the meaning of variability; do not manufacture significance from missing baseline variance or overlapping error bars. “文中有据” tracks attribution, never a correctness pass. Independently test the arithmetic and boundary behavior of retained interactions against the written worked example.
+
 Immediately after the affected formula or argument, give a visible, labeled note with the source location, original assertion, diagnosis, decisive derivation/example, and impact. Do not hide a serious error entirely behind a collapsed control. Longer supporting calculations may be expandable after the visible diagnosis. Use semantic note styles from `CONTENT_SCHEMA.md`; color supplements the written label.
 
 Include a concise findings overview when multiple issues affect the paper. Distinguish local writing defects from defects in a central proof, method or empirical conclusion. Explain what remains supported; one proof error does not itself refute an independently reported experiment. Avoid generic caveats or an unqualified verdict on the whole paper.

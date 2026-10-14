@@ -22,3 +22,28 @@ for(let epsilon=.5;epsilon<4;epsilon+=.1){
  assert.ok(next.lower<current.lower);assert.ok(next.radius>current.radius);
 }
 console.log('Interaction arithmetic: bound invariants, saturation, ties and decision changes passed.');
+const {logitPoint,regularizedLogit}=require('../web/interactions.js');
+const toy={fixed_logit:.5,initial_feature:1,feature_weight:1.5,max_shift:2};
+assert.ok(Math.abs(logitPoint(toy,.2,0).loss-Math.log1p(Math.exp(-2)))<1e-12);
+assert.ok(Math.abs(logitPoint(toy,.2,2).objective-(Math.log1p(Math.exp(1))-.8))<1e-12);
+assert.equal(regularizedLogit(toy,0).best.omega,2);
+assert.ok(regularizedLogit(toy,.8).best.omega<.2);
+let previous=Infinity;
+for(let l=0;l<=.8+1e-10;l+=.01){
+ const r=regularizedLogit(toy,l);
+ assert.ok(r.best.omega<=previous+1e-12);previous=r.best.omega;
+ for(const q of r.points){
+  assert.ok(Number.isFinite(q.objective)&&q.probability>0&&q.probability<1);
+  assert.ok(q.objective<=q.loss+1e-12);
+  const h=1e-5,difference=(logitPoint(toy,l,q.omega+h).objective-logitPoint(toy,l,q.omega-h).objective)/(2*h);
+  assert.ok(Math.abs(difference-q.gradient)<1e-8);
+ }
+ // Compare against a denser independent scan, allowing the reported grid precision.
+ let dense=-Infinity;for(let i=0;i<=4000;i++)dense=Math.max(dense,logitPoint(toy,l,2*i/4000).objective);
+ assert.ok(dense-r.best.objective<1e-5);
+}
+for(const fixed of [-20,20])for(const weight of [.01,20]){
+ const r=regularizedLogit({fixed_logit:fixed,initial_feature:-20,feature_weight:weight,max_shift:20},10);
+ assert.ok(r.points.every(q=>Number.isFinite(q.loss)&&Number.isFinite(q.objective)));
+}
+console.log('Logit example: analytical gradient, grid maximum, penalty monotonicity and numerical stability passed.');

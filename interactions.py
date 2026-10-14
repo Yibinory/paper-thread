@@ -58,6 +58,16 @@ def validate_interactives(doc):
                 for r in s['rows']:
                     if not isinstance(r,dict) or not text(r.get('label')) or not isinstance(r.get('values'),list) or len(r['values'])!=len(cols):bad('Invalid evidence row');continue
                     if not all(text(v) or number(v) for v in r['values']):bad('Invalid evidence value')
+        elif t=='regularized-logit':
+            p=c.get('parameters');r=c.get('lambda_range')
+            keys=('fixed_logit','initial_feature','feature_weight','max_shift')
+            if not isinstance(p,dict) or not all(number(p.get(k)) and abs(p[k])<=20 for k in keys):
+                bad('Logit example needs four finite, bounded parameters');continue
+            if p['max_shift']<=0 or p['feature_weight']<=0:bad('Logit example requires positive max_shift and feature_weight')
+            if not isinstance(r,dict) or not all(number(r.get(k)) for k in ('min','max','step','initial')):
+                bad('Invalid lambda range');continue
+            if not (0<=r['min']<r['max']<=10 and r['min']<=r['initial']<=r['max'] and 0<r['step']<=r['max']-r['min']):bad('Invalid lambda limits')
+            if not text(c.get('feature_label')):bad('Missing feature label')
         elif t=='pq-bound':
             vs=c.get('values');m=c.get('minimum')
             if m!=0.1 or not isinstance(vs,list) or len(vs)!=8 or not all(number(v) and v>=m for v in vs):bad('PQ example needs eight finite distances ≥ 0.1, minimum 0.1')

@@ -34,6 +34,8 @@ Using only the reading package, reconstruct the ordinary task, the specific rese
 
 ## Repair and recheck
 
+Before repairs, test whether the reader can calculate the central example from its stated inputs, explain the direction of the update, and connect its result to the next use. Can they distinguish the authors' documented observations from the report's constructed example, inference or suggested experiment? Can they name a diagnostic outcome that would weaken the proposed explanation? Record unsupported steps, conflicting numbers/roles and a provenance label that could be mistaken for a correctness verdict. Do not require a speculation section or a widget to pass.
+
 Classify the finding before choosing the repair. Missing prerequisites or unmotivated topic choices are organizational failures even when local prose is correct. Reopen the continuous explanation and outline; move, merge, split or defer material as needed, then write the affected prose. Adding “to address this,” a rhetorical question or another introduction does not repair a missing explanation of how the approach works on the problem. Return to primary sources when the missing rationale is factual, and do not manufacture necessity or efficacy to make a story smoother. Missing background, source ambiguity, factual errors and phrasing defects require their corresponding repairs.
 
 Repair at the first dependency rather than in an appended FAQ. For structural changes, reread the entire mainline and check moved material's prerequisites, not just neighboring paragraphs. Repeat the connected reconstruction and local checks for affected reasoning.
