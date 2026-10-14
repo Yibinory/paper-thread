@@ -3,8 +3,13 @@
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 from pypdf import PdfReader
+
+for stream in (sys.stdout, sys.stderr):
+ if hasattr(stream, 'reconfigure'):
+  stream.reconfigure(encoding='utf-8')
 
 parser=argparse.ArgumentParser()
 parser.add_argument('pdf',type=Path)

@@ -9,9 +9,11 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 from urllib.request import ProxyHandler, build_opener
 
 from library import Library, write_json
+from paper import LocalHTTPServer
 from scripts.install_skills import NAMES, install
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +50,15 @@ class SkillInstallTests(unittest.TestCase):
         backup = install(self.root, self.destination, update=True)
         self.assertEqual((backup / NAMES[1] / 'SKILL.md').read_text(encoding='utf-8'), '自己的修改')
 
+    def test_cli_reports_chinese_paths_as_utf8(self):
+        (self.root / 'scripts').mkdir()
+        shutil.copy2(ROOT / 'scripts/install_skills.py', self.root / 'scripts/install_skills.py')
+        result = subprocess.run([sys.executable, 'scripts/install_skills.py'], cwd=self.root,
+                                env={**os.environ, 'PYTHONIOENCODING': 'cp1252'},
+                                capture_output=True, encoding='utf-8', timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('文脉 with spaces', result.stdout)
+
 
 class FreshCheckoutTests(unittest.TestCase):
     def setUp(self):
@@ -65,11 +76,18 @@ class FreshCheckoutTests(unittest.TestCase):
     def test_empty_check_build_export(self):
         for arguments in (['check'], ['build'], ['export']):
             result = subprocess.run([sys.executable, 'paper.py', *arguments], cwd=self.root,
+                                    env={**os.environ, 'PYTHONIOENCODING': 'cp1252'},
                                     capture_output=True, encoding='utf-8', timeout=30)
             self.assertEqual(result.returncode, 0, result.stderr)
             json.loads(result.stdout)
         self.assertTrue((self.root / 'output/offline-reader.zip').is_file())
         self.assertEqual(Library(self.root).catalog(), [])
+
+    def test_loopback_server_does_not_require_dns(self):
+        with patch('socket.getfqdn', side_effect=AssertionError('Reverse DNS must not run')):
+            with LocalHTTPServer(('127.0.0.1', 0), object) as server:
+                self.assertEqual(server.server_name, 'localhost')
+                self.assertGreater(server.server_port, 0)
 
     def test_json_is_stored_as_utf8(self):
         write_json(self.root / '文脉.json', {'title': '知识介绍：测量 α → β'})

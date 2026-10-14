@@ -54,6 +54,9 @@ def install(root, destination, update=False):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--user', action='store_true', help='Install into ~/.agents/skills instead of this project')
     parser.add_argument('--update', action='store_true', help='Back up and replace existing copies when they differ')

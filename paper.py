@@ -8,9 +8,19 @@ import mimetypes
 import shutil
 import sys
 from pathlib import Path
+from socketserver import TCPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 import zipfile
 from library import Library, ROOT, digest, write_json
+
+
+class LocalHTTPServer(ThreadingHTTPServer):
+    def server_bind(self):
+        # This server only binds loopback; reverse DNS adds no useful information
+        # and can stall startup on machines with slow hostname resolution.
+        TCPServer.server_bind(self)
+        self.server_name = 'localhost'
+        self.server_port = self.server_address[1]
 
 
 def bundle(lib):
@@ -215,7 +225,7 @@ def serve(lib, port):
             self.send_header('X-Content-Type-Options','nosniff')
             super().end_headers()
 
-    server=ThreadingHTTPServer(('127.0.0.1',port),Handler)
+    server=LocalHTTPServer(('127.0.0.1',port),Handler)
     print('PaperThread: http://127.0.0.1:'+str(server.server_port),flush=True)
     try:
         server.serve_forever()
@@ -226,6 +236,10 @@ def serve(lib, port):
 
 
 def main():
+    # JSON output must remain UTF-8 when redirected on Windows, including paths.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
     p=argparse.ArgumentParser(description='Local paper reports and reusable knowledge')
     sub=p.add_subparsers(dest='command',required=True)
     s=sub.add_parser('serve');s.add_argument('--port',type=int,default=8765)
